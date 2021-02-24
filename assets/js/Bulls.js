@@ -2,8 +2,33 @@ import React, { useState, useEffect } from "react";
 import { ch_join, ch_push, ch_reset } from "./socket";
 import "../css/bulls.scss";
 
+function JoinGame({userName, setUserName}) {
+  const [gameName, setGameName] = useState("");
+
+  return (
+    <div className="row">
+      <div className="column">
+        <input type="text"
+               value={gameName}
+               onChange={(ev) => setGameName(ev.target.value)} />
+        <input type="text"
+               value={userName}
+               onChange={(ev) => setUserName(ev.target.value)} />
+      </div>
+      <div className="column">
+      {/* //onClick={() => ch_login(gameName, userName)}> */}
+        <button onClick={()=>console.log(gameName, userName)}>
+          Join Game
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Bulls() {
   const [state, setState] = useState({
+    gameName: "",
+    users: [],
     secret: "",
     guesses: [],
     warning_str: "",
@@ -11,9 +36,10 @@ function Bulls() {
     won: false,
   });
 
+  const [userName, setUserName] = useState("")
   const [text, setText] = useState("");
 
-  let { secret, guesses, warning_str, lives, won } = state;
+  let { gameName, users, secret, guesses, warning_str, lives, won } = state;
 
   useEffect(() => {
     ch_join(setState);
@@ -54,7 +80,11 @@ function Bulls() {
 
   let body = null;
 
-  if (lives == 0) {
+  if (!gameName){
+    body = <JoinGame userName={userName} setUserName={setUserName}/>;
+  }
+
+  else if (lives == 0) {
     body = <GameOver />;
   } else {
     body = (

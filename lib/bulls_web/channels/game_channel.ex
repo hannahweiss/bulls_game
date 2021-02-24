@@ -34,6 +34,19 @@ defmodule BullsWeb.GameChannel do
         {:reply, {:ok, view}, socket}
     end
 
+    @impl true
+    def handle_in("login", %{"name" => game_name}, socket) do
+        # socket = assign(socket, :user, user)
+        # view = socket.assigns[:name]
+        # |> GameServer.peek()
+        # |> Game.view(user)
+        # {:reply, {:ok, view}, socket}
+        # game = Game.new
+        # socket = assign(socket, :game, game)
+        # view = Game.view(game)
+        # {:reply, {:ok, view}, socket}
+    end
+
     # Add authorization logic here as required.
     defp authorized?(_payload) do
         true

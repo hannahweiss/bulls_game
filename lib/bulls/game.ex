@@ -5,10 +5,13 @@ defmodule Bulls.Game do
     def new do
         %{
           secret: random_digit_sequence([]),
-          guesses: [],
           warning_str: "",
           lives: 8,
-          won: false,
+          game_over: false,
+          # if playing is false, game is in setup mode
+          playing: false,
+          # map of username to map containing user info (ready, role, guesses)
+          users: {},
         }
       end
 

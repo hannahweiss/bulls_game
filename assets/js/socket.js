@@ -97,6 +97,14 @@ export function ch_reset() {
          });
 }
 
+export function ch_login(name) {
+  channel.push("login", {name: name})
+         .receive("ok", state_update)
+         .receive("error", resp => {
+           console.log("Unable to login", resp)
+         });
+}
+
 channel.join()
   .receive("ok", state_update)
   .receive("error", resp => { console.log("Unable to join", resp) })
