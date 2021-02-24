@@ -6,7 +6,7 @@ Hannah Weiss
 
 
 2. What hostname did you deploy to?
-Hw05.hweisswebdev.com
+hw05.hweisswebdev.com
 
 
 3. Which parts of this assignment did you have trouble with, if any?
