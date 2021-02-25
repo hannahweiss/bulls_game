@@ -4,14 +4,12 @@ defmodule BullsWeb.GameChannel do
     use BullsWeb, :channel
 
     alias  Bulls.Game
+    alias  Bulls.GameServer
 
     @impl true
     def join("game:" <> _id, payload, socket) do
         if authorized?(payload) do
-            game = Game.new
-            socket = assign(socket, :game, game)
-            view = Game.view(game)
-            {:ok, view, socket}
+            {:ok, %{}, socket}
         else
             {:error, %{reason: "unauthorized"}}
         end
@@ -35,7 +33,7 @@ defmodule BullsWeb.GameChannel do
     end
 
     @impl true
-    def handle_in("login", %{"name" => game_name}, socket) do
+    def handle_in("login", %{"name" => game_name, "user_name" => user_name}, socket) do
         # socket = assign(socket, :user, user)
         # view = socket.assigns[:name]
         # |> GameServer.peek()

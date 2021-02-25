@@ -3,14 +3,14 @@ defmodule Bulls.GameServer do
 
     alias Bulls.Game
 
-    def regGame(name) do
+    def reg(name) do
         {:via, Registry, {Bulls.GameReg, name}}
     end
 
-    # only needs to be called after a game has completed
-    def regUser(name) do
-        {:via, Registry, {Bulls.UserReg, name}}
-    end
+    # # only needs to be called after a game has completed
+    # def regUser(name) do
+    #     {:via, Registry, {Bulls.UserReg, name}}
+    # end
 
     def start(name) do
         spec = %{
@@ -35,14 +35,18 @@ defmodule Bulls.GameServer do
         GenServer.call(reg(name), {:reset, name})
       end
     
-      def guess(name, letter) do
-        GenServer.call(reg(name), {:guess, name, letter})
+      def guess(game_name, guess_string, user_name) do
+        GenServer.call(reg(name), {:guess, game_name, guess_string, user_name})
+      end
+
+      def peek(name) do
+        GenServer.call(reg(name), {:peek, name})
       end
     
       # implementation
     
       def init(game) do
-        Process.send_after(self(), :pook, 10_000)
+        # Process.send_after(self(), :pook, 10_000)
         {:ok, game}
       end
     
@@ -52,9 +56,19 @@ defmodule Bulls.GameServer do
         {:reply, game, game}
       end
     
-      def handle_call({:guess, name, letter}, _from, game) do
-        game = Game.guess(game, letter)
+      def handle_call({:guess, name, guess_string, user_name}, _from, game) do
+        game = Game.guess(game, guess_string, user_name)
         BackupAgent.put(name, game)
+        {:reply, game, game}
+      end
+
+      def handle_call({:join_user, name, user_name}, _from, game) do
+        game = Game.add_new_user(game, user_name)
+        BackupAgent.put(name, game)
+        {:reply, game, game}
+      end
+
+      def handle_call({:peek, _name}, _from, game) do
         {:reply, game, game}
       end
 
