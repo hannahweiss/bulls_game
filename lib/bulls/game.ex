@@ -5,15 +5,29 @@ defmodule Bulls.Game do
     def new do
         %{
           secret: random_digit_sequence([]),
-          warning_str: "",
-          lives: 8,
           game_over: false,
           # if playing is false, game is in setup mode
           playing: false,
           # map of username to map containing user info (ready, role, guesses)
           users: {},
         }
-      end
+    end
+
+    def add_new_user(state, user_name) do
+        user_info = 
+        %{
+            ready: false,
+            role: "observer",
+            guesses: [],
+        }
+        new_users = Map.put(state.users, user_name, user_info)
+        # Map.put(map, :d, 4)
+        # users[user_name] = user_info
+
+        %{state | users : new_users}
+
+
+    end
 
     def random_digit_sequence(chosen_digits) do
         if length(chosen_digits) == 4 do
@@ -30,19 +44,21 @@ defmodule Bulls.Game do
         end
     end
 
-    def guess(state, guess_string) do
-        if validate_guess(state, guess_string) do
+    def guess(state, guess_string, user_name) do
+        if state.playing do
             if winning_guess?(state.secret, String.graphemes(guess_string)) do
-                %{ state | lives: 0, won: true}
+                %{ state | game_over: true}
             else
-                %{ state | guesses: state.guesses ++ [guess_string <> ": " <> get_bulls_and_cows(state, guess_string)], 
-                warning_str: "", 
-                lives: state.lives - 1 }
+                users = state.users
+                user = users[user_name]
+                user = %{ user | guesses: user.guesses ++ [guess_string <> ": " <> get_bulls_and_cows(state, guess_string)]}
+                new_users = Map.put(users, user_name, user)
+                %{ state | users: new_users}
+                # Map.put(user, :guesses, user.guesses ++ [guess_string <> ": " <> get_bulls_and_cows(state, guess_string)])
+                # %{ state | users[user_name].guesses:  users[user_name].guesses ++ 
+                #     [guess_string <> ": " <> get_bulls_and_cows(state, guess_string)]}
             end
-        else
-            %{ state | warning_str: "Invalid Guess"}
         end
-        
     end
 
     def winning_guess?(secret, guess_string) do
