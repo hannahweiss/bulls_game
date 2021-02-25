@@ -9,7 +9,7 @@
 import {Socket} from "phoenix"
 
 let socket = new Socket(
-  "/socket", 
+  "/socket",
   {params: {token: ""}}
   );
 
@@ -81,8 +81,8 @@ export function ch_join(cb) {
   callback(state);
 }
 
-export function ch_push(guess) {
-  channel.push("guess", guess)
+export function ch_push(guess, user_name) {
+  channel.push("guess", {guess, user_name})
          .receive("ok", state_update)
          .receive("error", resp => {
            console.log("Unable to push", resp)
@@ -97,8 +97,8 @@ export function ch_reset() {
          });
 }
 
-export function ch_login(name) {
-  channel.push("login", {name: name})
+export function ch_login(game_name, user_name) {
+  channel.push("login", {name: game_name, user_name})
          .receive("ok", state_update)
          .receive("error", resp => {
            console.log("Unable to login", resp)
