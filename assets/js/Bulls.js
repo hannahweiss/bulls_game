@@ -55,7 +55,6 @@ function Bulls() {
     const [text, setText] = useState("");
 
     let {game_name, game_over, playing, users} = state;
-    console.log(state);
 
     useEffect(() => {
         ch_join(setState);
@@ -92,7 +91,6 @@ function Bulls() {
 
     function changePlayingStatus() {
         let playing = users[userName].role === "player";
-        console.log(!playing);
         ch_user_playing(!playing);
     }
 
@@ -182,7 +180,6 @@ function Bulls() {
                             return (
                                 <ol key={userIndex}>
                                     {user.guesses.map((guess, index) => {
-                                        console.log(guess);
                                         return (
                                             <li key={index}>
                                                 {guess.guess_string} {guess.bulls} {guess.cows}

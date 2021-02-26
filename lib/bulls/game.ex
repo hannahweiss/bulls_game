@@ -44,15 +44,11 @@ defmodule Bulls.Game do
     users = state.users
     user = users[user_name]
 
-    IO.inspect(playing)
-
     user = if playing do
         %{user | role: "player"}
     else
         %{user | role: "observer", ready: false}
     end
-
-    IO.inspect(user)
 
     new_users = Map.put(users, user_name, user)
     %{state | users: new_users}
@@ -96,9 +92,9 @@ defmodule Bulls.Game do
   def update_guesses(state) do
     users = state.users
 
-    users = Map.new(Enum.map(users, fn {user_name, user_info} -> {user_name, %{user_info | 
-                        guesses: user_info.guesses 
-                        ++ [Map.put(get_bulls_and_cows(state, user_info.current_guess), 
+    users = Map.new(Enum.map(users, fn {user_name, user_info} -> {user_name, %{user_info |
+                        guesses: user_info.guesses
+                        ++ [Map.put(get_bulls_and_cows(state, user_info.current_guess),
                         "guess_string", user_info.current_guess)],
                         current_guess: ""}}
                     end))

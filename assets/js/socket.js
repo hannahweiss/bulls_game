@@ -76,7 +76,6 @@ function state_update(st){
 }
 
 export function ch_join(cb) {
-  console.log(cb)
   callback = cb;
   callback(state);
 }

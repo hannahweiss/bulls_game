@@ -62,8 +62,6 @@ defmodule Bulls.GameServer do
   # implementation
 
   def init(game) do
-    IO.inspect(self())
-    # Process.send_after(self(), :update_guesses, 5_000)
     {:ok, game}
   end
 
@@ -107,13 +105,10 @@ defmodule Bulls.GameServer do
   end
 
   def handle_info(:update_guesses, game) do
-    IO.inspect(game)
     game = Game.update_guesses(game)
     BullsWeb.Endpoint.broadcast!(
         game.game_name, "view", Game.view(game)
     )
-
-    IO.inspect(game)
     Process.send_after(self(), :update_guesses, 5_000)
     {:noreply, game}
   end
