@@ -16,19 +16,24 @@ defmodule Bulls.Game do
   end
 
   def add_new_user(state, user_name) do
-    user_info =
-      %{
-        ready: false,
-        role: "observer",
-        guesses: [],
-        current_guess: "",
-        won: false
-      }
-    new_users = Map.put(state.users, user_name, user_info)
-    # Map.put(map, :d, 4)
-    # users[user_name] = user_info
+    if state.playing and Map.has_key?(state.users, user_name) do
+        state
+    else
+        user_info =
+        %{
+            ready: false,
+            role: "observer",
+            guesses: [],
+            current_guess: "",
+            won: false
+        }
+        new_users = Map.put(state.users, user_name, user_info)
+        # Map.put(map, :d, 4)
+        # users[user_name] = user_info
 
-    %{state | users: new_users}
+        %{state | users: new_users}
+    end
+    
 
 
   end
