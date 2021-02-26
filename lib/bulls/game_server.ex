@@ -2,6 +2,9 @@ defmodule Bulls.GameServer do
   use GenServer
 
   alias Bulls.Game
+  alias Bulls.Leaderboard
+
+  @guess_length 5_000
 
 
   def reg(name) do
@@ -100,16 +103,20 @@ defmodule Bulls.GameServer do
   end
 
   def handle_call({:update_guesses}, _from, game) do
-    Process.send_after(self(), :update_guesses, 5_000)
+    Process.send_after(self(), :update_guesses, @guess_length)
     {:reply, game, game}
   end
 
   def handle_info(:update_guesses, game) do
     game = Game.update_guesses(game)
+    |> Game.update_game_state
+    IO.inspect(game)
     BullsWeb.Endpoint.broadcast!(
         game.game_name, "view", Game.view(game)
     )
-    Process.send_after(self(), :update_guesses, 5_000)
+    if game.playing do
+      Process.send_after(self(), :update_guesses, @guess_length)
+    end
     {:noreply, game}
   end
 

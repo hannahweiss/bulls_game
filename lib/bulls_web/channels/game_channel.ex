@@ -21,7 +21,6 @@ defmodule BullsWeb.GameChannel do
     user_name = socket0.assigns[:user_name]
     game1 = GameServer.guess(game_name, user_name, guess_digits)
     view = Game.view(game1)
-    # broadcast(socket0, "view", view)
     {:reply, {:ok, view}, socket0}
   end
 

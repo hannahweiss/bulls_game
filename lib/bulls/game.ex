@@ -5,7 +5,8 @@ defmodule Bulls.Game do
   def new(game_name) do
     %{
       secret: random_digit_sequence([]),
-      game_over: false,
+      last_winners: [],
+      leaderboard: %{},
       # if playing is false, game is in setup mode
       playing: false,
       # map of username to map containing user info (ready, role, guesses)
@@ -21,6 +22,7 @@ defmodule Bulls.Game do
         role: "observer",
         guesses: [],
         current_guess: "",
+        won: false
       }
     new_users = Map.put(state.users, user_name, user_info)
     # Map.put(map, :d, 4)
@@ -45,9 +47,9 @@ defmodule Bulls.Game do
     user = users[user_name]
 
     user = if playing do
-        %{user | role: "player"}
+      %{user | role: "player"}
     else
-        %{user | role: "observer", ready: false}
+      %{user | role: "observer", ready: false}
     end
 
     new_users = Map.put(users, user_name, user)
@@ -55,8 +57,8 @@ defmodule Bulls.Game do
   end
 
   def game_ready?(state) do
-    all_players = Enum.filter(Map.values(state.users), fn(user) -> user.role == "player" end)
-    not_ready_players = Enum.filter(all_players, fn(user) -> user.ready == false end)
+    all_players = Enum.filter(Map.values(state.users), fn (user) -> user.role == "player" end)
+    not_ready_players = Enum.filter(all_players, fn (user) -> user.ready == false end)
 
     ready = length(not_ready_players) == 0 and length(all_players) > 0
 
@@ -80,10 +82,11 @@ defmodule Bulls.Game do
   end
 
   def guess(state, user_name, guess_string) do
+    IO.inspect(state.secret)
     users = state.users
     user = users[user_name]
 
-    user = %{ user | current_guess: guess_string}
+    user = %{user | current_guess: guess_string}
     new_users = Map.put(users, user_name, user)
     %{state | users: new_users}
 
@@ -92,31 +95,68 @@ defmodule Bulls.Game do
   def update_guesses(state) do
     users = state.users
 
-    users = Map.new(Enum.map(users, fn {user_name, user_info} -> {user_name, %{user_info |
-                        guesses: user_info.guesses
-                        ++ [Map.put(get_bulls_and_cows(state, user_info.current_guess),
-                        "guess_string", user_info.current_guess)],
-                        current_guess: ""}}
-                    end))
+    users = Map.new(
+      Enum.map(
+        users,
+        fn {user_name, user_info} ->
+          {
+            user_name,
+            %{
+              user_info |
+              guesses: [
+                Map.put(
+                  get_bulls_and_cows(state, user_info.current_guess),
+                  :guess_string,
+                  user_info.current_guess
+                ) | user_info.guesses
+              ],
+              current_guess: ""
+            }
+          }
+        end
+      )
+    )
 
-    %{ state | users: users}
+    %{state | users: users}
   end
 
-#   def guess(state, user_name, guess_string) do
-# #    if state[:playing] do
-#       IO.inspect(state)
-#       if winning_guess?(state.secret, String.graphemes(guess_string)) do
-#         %{state | game_over: true}
-#       else
-#         users = state.users
-#         user = users[user_name]
-#         guess_info = Map.put(get_bulls_and_cows(state, guess_string), "guess_string", guess_string)
-#         user = %{user | guesses: user.guesses ++ [guess_info]}
-#         new_users = Map.put(users, user_name, user)
-#         %{state | users: new_users}
-#       end
-# #    end
-#   end
+  def update_game_state(state) do
+    users = Map.new(Enum.map(state.users, fn{user_name, user} -> {user_name, update_winner(state.secret, user, user.guesses)} end))
+    winners = Enum.map(Enum.filter(users, fn{user_name, user} -> user.won end), fn{user_name, user} -> user_name end)
+    game_over = length(winners) > 0
+    st = %{state | users: users, playing: !game_over}
+    if game_over do
+      clear_game_state(st, winners)
+    else
+      st
+    end
+  end
+
+  def clear_game_state(state, winners) do
+    users = Map.new(Enum.map(state.users, fn {user_name, user} -> {user_name, %{user | guesses: [], role: "observer", ready: false, won: false}} end))
+    %{state | users: users, last_winners: winners, secret: random_digit_sequence([]), leaderboard: update_leaderboard(winners, state.leaderboard)}
+  end
+
+  def update_leaderboard([], leaderboard) do
+    leaderboard
+  end
+
+  def update_leaderboard([winner | tail], leaderboard) do
+    update_leaderboard(tail, Map.put(leaderboard, winner, (leaderboard[winner] || 0) + 1))
+  end
+
+  def update_winner(secret, user, [last_guess | tail]) do
+    answer = Enum.join(secret, "")
+    %{user | won: answer == last_guess.guess_string}
+  end
+
+  def update_winner(secret, user, []) do
+    user
+  end
+
+  def get_winner_names(state) do
+    Enum.map(Enum.filter(state.users, fn{_u, user} -> user.won end), fn{name, _i} -> name end)
+  end
 
   def winning_guess?(secret, guess_string) do
     if length(secret) == 0 do
@@ -168,15 +208,15 @@ defmodule Bulls.Game do
 
   def get_bulls_and_cows(state, guess_string) do
     if guess_string == "" do
-        %{bulls: 0, cows: 0}
+      %{bulls: 0, cows: 0}
     else
-        recursive_bulls_and_cows(
+      recursive_bulls_and_cows(
         state.secret,
         String.graphemes(guess_string),
         0,
         0,
         0
-        )
+      )
     end
   end
 

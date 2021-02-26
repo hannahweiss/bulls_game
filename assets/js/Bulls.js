@@ -54,7 +54,7 @@ function Bulls() {
     const [userName, setUserName] = useState("");
     const [text, setText] = useState("");
 
-    let {game_name, game_over, playing, users} = state;
+    let {game_name, last_winners, leaderboard, playing, users} = state;
 
     useEffect(() => {
         ch_join(setState);
