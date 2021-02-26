@@ -7,7 +7,7 @@ defmodule BullsWeb.GameChannel do
   alias  Bulls.GameServer
 
   @impl true
-  def join("game:" <> _id, payload, socket) do
+  def join("" <> _id, payload, socket) do
     if authorized?(payload) do
       {:ok, %{}, socket}
     else
@@ -17,11 +17,36 @@ defmodule BullsWeb.GameChannel do
 
   @impl true
   def handle_in("guess", %{"guess" => guess_digits, "user_name" => user_name}, socket0) do
-    game0 = socket0.assigns[:name]
-            |> GameServer.peek()
-    game1 = Game.guess(game0, guess_digits, user_name)
+    game_name = socket0.assigns[:name]
+    user_name = socket0.assigns[:user_name]
+    game1 = GameServer.guess(game_name, user_name, guess_digits)
     view = Game.view(game1)
+    # broadcast(socket0, "view", view)
     {:reply, {:ok, view}, socket0}
+  end
+
+  @impl true
+  def handle_in("player_ready", %{"ready" => ready}, socket) do
+    game_name = socket.assigns[:name]
+    user_name = socket.assigns[:user_name]
+    game1 = GameServer.set_player_ready(game_name, user_name, ready)
+    game1 = GameServer.game_ready?(game_name)
+    if game1.playing do
+        GameServer.start_timer(game_name)
+    end
+    view = Game.view(game1)
+    broadcast(socket, "view", view)
+    {:reply, {:ok, view}, socket}
+  end
+
+  @impl true
+  def handle_in("player_playing", %{"playing" => playing}, socket) do
+    game_name = socket.assigns[:name]
+    user_name = socket.assigns[:user_name]
+    game1 = GameServer.set_player_playing(game_name, user_name, playing)
+    view = Game.view(game1)
+    broadcast(socket, "view", view)
+    {:reply, {:ok, view}, socket}
   end
 
   @impl true
@@ -37,6 +62,7 @@ defmodule BullsWeb.GameChannel do
     GameServer.start(game_name)
     socket = socket
              |> assign(:name, game_name)
+             |> assign(:user_name, user_name)
     view = socket.assigns[:name]
            |> GameServer.add_new_user(user_name)
            |> Game.view()

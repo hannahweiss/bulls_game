@@ -20,6 +20,7 @@ defmodule Bulls.Game do
         ready: false,
         role: "observer",
         guesses: [],
+        current_guess: "",
       }
     new_users = Map.put(state.users, user_name, user_info)
     # Map.put(map, :d, 4)
@@ -27,6 +28,43 @@ defmodule Bulls.Game do
 
     %{state | users: new_users}
 
+
+  end
+
+  def set_player_ready(state, user_name, ready) do
+    users = state.users
+    user = users[user_name]
+    user = %{user | ready: ready}
+    new_users = Map.put(users, user_name, user)
+
+    %{state | users: new_users}
+  end
+
+  def set_player_playing(state, user_name, playing) do
+    users = state.users
+    user = users[user_name]
+
+    IO.inspect(playing)
+
+    user = if playing do
+        %{user | role: "player"}
+    else
+        %{user | role: "observer", ready: false}
+    end
+
+    IO.inspect(user)
+
+    new_users = Map.put(users, user_name, user)
+    %{state | users: new_users}
+  end
+
+  def game_ready?(state) do
+    all_players = Enum.filter(Map.values(state.users), fn(user) -> user.role == "player" end)
+    not_ready_players = Enum.filter(all_players, fn(user) -> user.ready == false end)
+
+    ready = length(not_ready_players) == 0 and length(all_players) > 0
+
+    %{state | playing: ready}
 
   end
 
@@ -45,24 +83,44 @@ defmodule Bulls.Game do
     end
   end
 
-  def guess(state, guess_string, user_name) do
-#    if state[:playing] do
-      IO.inspect(state)
-      if winning_guess?(state.secret, String.graphemes(guess_string)) do
-        %{state | game_over: true}
-      else
-        users = state.users
-        user = users[user_name]
-        guess_info = Map.put(get_bulls_and_cows(state, guess_string), "guess_string", guess_string)
-        user = %{user | guesses: user.guesses ++ [guess_info]}
-        new_users = Map.put(users, user_name, user)
-        %{state | users: new_users}
-        # Map.put(user, :guesses, user.guesses ++ [guess_string <> ": " <> get_bulls_and_cows(state, guess_string)])
-        # %{ state | users[user_name].guesses:  users[user_name].guesses ++
-        #     [guess_string <> ": " <> get_bulls_and_cows(state, guess_string)]}
-      end
-#    end
+  def guess(state, user_name, guess_string) do
+    users = state.users
+    user = users[user_name]
+
+    user = %{ user | current_guess: guess_string}
+    new_users = Map.put(users, user_name, user)
+    %{state | users: new_users}
+
   end
+
+  def update_guesses(state) do
+    users = state.users
+
+    users = Map.new(Enum.map(users, fn {user_name, user_info} -> {user_name, %{user_info | 
+                        guesses: user_info.guesses 
+                        ++ [Map.put(get_bulls_and_cows(state, user_info.current_guess), 
+                        "guess_string", user_info.current_guess)],
+                        current_guess: ""}}
+                    end))
+
+    %{ state | users: users}
+  end
+
+#   def guess(state, user_name, guess_string) do
+# #    if state[:playing] do
+#       IO.inspect(state)
+#       if winning_guess?(state.secret, String.graphemes(guess_string)) do
+#         %{state | game_over: true}
+#       else
+#         users = state.users
+#         user = users[user_name]
+#         guess_info = Map.put(get_bulls_and_cows(state, guess_string), "guess_string", guess_string)
+#         user = %{user | guesses: user.guesses ++ [guess_info]}
+#         new_users = Map.put(users, user_name, user)
+#         %{state | users: new_users}
+#       end
+# #    end
+#   end
 
   def winning_guess?(secret, guess_string) do
     if length(secret) == 0 do
@@ -113,13 +171,17 @@ defmodule Bulls.Game do
   end
 
   def get_bulls_and_cows(state, guess_string) do
-    recursive_bulls_and_cows(
-      state.secret,
-      String.graphemes(guess_string),
-      0,
-      0,
-      0
-    )
+    if guess_string == "" do
+        %{bulls: 0, cows: 0}
+    else
+        recursive_bulls_and_cows(
+        state.secret,
+        String.graphemes(guess_string),
+        0,
+        0,
+        0
+        )
+    end
   end
 
   def recursive_bulls_and_cows(secret, guess_string, i, bulls, cows) do

@@ -58,7 +58,6 @@ let socket = new Socket(
 socket.connect()
 
 // Now that you are connected, you can join channels with a topic:
-let channel = socket.channel("game:1", {})
 
 let state = {
   secret: "1234",
@@ -66,6 +65,7 @@ let state = {
 }
 
 let callback = null;
+let channel = null;
 
 function state_update(st){
   console.log("New state", st);
@@ -98,6 +98,12 @@ export function ch_reset() {
 }
 
 export function ch_login(game_name, user_name) {
+  channel = socket.channel(game_name, {})
+  channel.join()
+        .receive("ok", state_update)
+        .receive("error", resp => { console.log("Unable to join", resp) })
+  channel.on("view", state_update)
+
   channel.push("login", {name: game_name, user_name})
          .receive("ok", state_update)
          .receive("error", resp => {
@@ -105,8 +111,20 @@ export function ch_login(game_name, user_name) {
          });
 }
 
-channel.join()
-  .receive("ok", state_update)
-  .receive("error", resp => { console.log("Unable to join", resp) })
+export function ch_user_ready(ready){
+  channel.push("player_ready", {ready: ready})
+          .receive("ok", state_update)
+          .receive("error", resp => {
+          console.log("Unable to login", resp)
+  });
+}
+
+  export function ch_user_playing(playing){
+    channel.push("player_playing", {playing: playing})
+            .receive("ok", state_update)
+            .receive("error", resp => {
+            console.log("Unable to login", resp)
+    });
+}
 
 export default socket

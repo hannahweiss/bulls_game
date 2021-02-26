@@ -8,11 +8,6 @@ defmodule Bulls.GameServer do
     {:via, Registry, {Bulls.GameReg, name}}
   end
 
-  # # only needs to be called after a game has completed
-  # def regUser(name) do
-  #     {:via, Registry, {Bulls.UserReg, name}}
-  # end
-
   def start(name) do
     spec = %{
       id: __MODULE__,
@@ -36,12 +31,28 @@ defmodule Bulls.GameServer do
     GenServer.call(reg(name), {:reset, name})
   end
 
-  def guess(game_name, guess_string, user_name) do
-    GenServer.call(reg(game_name), {:guess, game_name, guess_string, user_name})
+  def guess(game_name, user_name, guess_string) do
+    GenServer.call(reg(game_name), {:guess, game_name, user_name, guess_string})
   end
 
   def add_new_user(game_name, user_name) do
     GenServer.call(reg(game_name), {:join_user, game_name, user_name})
+  end
+
+  def set_player_ready(game_name, user_name, ready) do
+    GenServer.call(reg(game_name), {:set_player_ready, game_name, user_name, ready})
+  end
+
+  def set_player_playing(game_name, user_name, playing) do
+    GenServer.call(reg(game_name), {:set_player_playing, game_name, user_name, playing})
+  end
+
+  def game_ready?(game_name) do
+    GenServer.call(reg(game_name), {:game_ready?, game_name})
+  end
+
+  def start_timer(game_name) do
+    GenServer.call(reg(game_name), {:update_guesses})
   end
 
   def peek(name) do
@@ -51,30 +62,60 @@ defmodule Bulls.GameServer do
   # implementation
 
   def init(game) do
-    # Process.send_after(self(), :pook, 10_000)
+    IO.inspect(self())
+    # Process.send_after(self(), :update_guesses, 5_000)
     {:ok, game}
   end
 
   def handle_call({:reset, name}, _from, game) do
     game = Game.new
-#    BackupAgent.put(name, game)
     {:reply, game, game}
   end
 
-  def handle_call({:guess, name, guess_string, user_name}, _from, game) do
-    game = Game.guess(game, guess_string, user_name)
-#    BackupAgent.put(name, game)
+  def handle_call({:guess, name, user_name, guess_string}, _from, game) do
+    game = Game.guess(game, user_name, guess_string)
     {:reply, game, game}
   end
 
   def handle_call({:join_user, name, user_name}, _from, game) do
     game = Game.add_new_user(game, user_name)
-#    BackupAgent.put(name, game)
+    {:reply, game, game}
+  end
+
+  def handle_call({:set_player_ready, name, user_name, ready}, _from, game) do
+    game = Game.set_player_ready(game, user_name, ready)
+    {:reply, game, game}
+  end
+
+  def handle_call({:set_player_playing, name, user_name, playing}, _from, game) do
+    game = Game.set_player_playing(game, user_name, playing)
+    {:reply, game, game}
+  end
+
+  def handle_call({:game_ready?, _name}, _from, game) do
+    game = Game.game_ready?(game)
     {:reply, game, game}
   end
 
   def handle_call({:peek, _name}, _from, game) do
     {:reply, game, game}
+  end
+
+  def handle_call({:update_guesses}, _from, game) do
+    Process.send_after(self(), :update_guesses, 5_000)
+    {:reply, game, game}
+  end
+
+  def handle_info(:update_guesses, game) do
+    IO.inspect(game)
+    game = Game.update_guesses(game)
+    BullsWeb.Endpoint.broadcast!(
+        game.game_name, "view", Game.view(game)
+    )
+
+    IO.inspect(game)
+    Process.send_after(self(), :update_guesses, 5_000)
+    {:noreply, game}
   end
 
 end
