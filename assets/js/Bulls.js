@@ -8,11 +8,17 @@ function JoinGame({userName, setUserName}) {
     return (
         <div className="row">
             <div className="column">
+                <div>
+                  Game Name
+                </div>
                 <input
                     type="text"
                     value={game_name}
                     onChange={(ev) => setGameName(ev.target.value)}
                 />
+                <div>
+                  User Name
+                </div>
                 <input
                     type="text"
                     value={userName}
@@ -170,26 +176,41 @@ function Bulls() {
                                 <p>{users[userName].current_guess || ""}</p>
                             </div>
                         </div>
-                    ) : null}
+                    ) : <div>You are an observer</div>}
                 </div>
 
                 <div className="column">
                     <h2>Guesses</h2>
-                    <ol className="guesses">
-                        {Object.values(users).map((user, userIndex) => {
-                            return (
-                                <ol key={userIndex}>
-                                    {user.guesses.map((guess, index) => {
-                                        return (
-                                            <li key={index}>
-                                                {guess.guess_string} {guess.bulls} {guess.cows}
-                                            </li>
-                                        );
-                                    })}
-                                </ol>
+                    <div className="row">
+                      {console.log(Object.entries(users))}
+                        {Object.entries(users).map((user, userIndex) => {
+                            return ( user[1].role === "player" ? 
+                              <div className="user_guesses" key={userIndex}>
+                                <h4>{user[0]}</h4>
+                                <ul>
+                                  {user[1].guesses.map((guess, index) =>{
+                                    return (
+                                      <li key={index}>
+                                        {guess.guess_string} {guess.bulls} {guess.cows}
+                                      </li>
+                                    )
+                                  })}
+
+                                </ul>
+                                
+                              </div> : null
+                                // <ol key={userIndex}>
+                                //     {user.guesses.map((guess, index) => {
+                                //         return (
+                                //             <li key={index}>
+                                //                 {guess.guess_string} {guess.bulls} {guess.cows}
+                                //             </li>
+                                //         );
+                                //     })}
+                                // </ol>
                             );
                         })}
-                    </ol>
+                    </div>
                 </div>
             </div>
         );
