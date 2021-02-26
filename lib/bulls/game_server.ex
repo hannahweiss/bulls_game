@@ -4,7 +4,7 @@ defmodule Bulls.GameServer do
   alias Bulls.Game
   alias Bulls.Leaderboard
 
-  @guess_length 5_000
+  @guess_length 30_000
 
 
   def reg(name) do
